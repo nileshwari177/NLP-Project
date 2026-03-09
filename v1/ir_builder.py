@@ -8,15 +8,23 @@ PRIORITY_METRICS = [
     "rating",
     "price",
     "revenue",
-    "units_sold"
+    "units_sold",
+    "salary",
+    "quantity",
+    "year",
+    "year_joined"
 ]
 
 
 def build_ir(parsed):
+    """Build intermediate representation with enhanced column detection."""
     table = parsed["table"]
 
     if not table:
         raise ValueError("Table not detected")
+
+    if table not in SCHEMA:
+        raise ValueError(f"Table '{table}' not found in schema")
 
     columns = SCHEMA[table]["columns"]
 
@@ -24,14 +32,10 @@ def build_ir(parsed):
     direction = parsed["direction"]
     limit = parsed["limit"]
     where = parsed["where"]
+    detected_column = parsed.get("column")
 
-    metric_column = None
-
-    if direction:
-        metric_column = choose_metric(columns)
-
-    if aggregation:
-        metric_column = choose_metric(columns)
+    # Use detected column or choose metric from priority list
+    metric_column = detected_column or (choose_metric(columns) if (direction or aggregation) else None)
 
     ir = {
         "select": ["*"],
