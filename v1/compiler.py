@@ -20,9 +20,19 @@ def compile_mysql(ir):
     if where:
         conditions = []
         for condition in where:
-            conditions.append(
-                f"{condition['column']} {condition['operator']} {condition['value']}"
-            )
+            operator = condition['operator']
+            column = condition['column']
+            value = condition['value']
+
+            # Handle BETWEEN operator specially (value is a tuple)
+            if operator == "BETWEEN":
+                conditions.append(
+                    f"{column} BETWEEN {value[0]} AND {value[1]}"
+                )
+            else:
+                conditions.append(
+                    f"{column} {operator} {value}"
+                )
         where_clause = "WHERE " + " AND ".join(conditions)
 
     # ORDER BY clause
