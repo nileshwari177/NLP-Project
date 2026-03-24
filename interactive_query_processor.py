@@ -3,6 +3,7 @@ Interactive Query Processor
 Converts extracted keywords into SQL queries
 """
 
+import re
 from typing import Dict, List, Optional
 
 
@@ -56,16 +57,72 @@ class QueryProcessor:
         column = keywords.get('primary_column')
         aggregation = keywords.get('aggregation')
         intent = keywords.get('intent')
+        original_query = keywords.get('original_query', '').lower()
 
         # Prioritize intent over raw aggregation presence
         if intent == 'ranking' and column:
             # For ranking, show ID and the ranking column
             return f"SELECT id, {column}"
-        elif intent == 'aggregation' and aggregation and column:
-            # Aggregation query (only when intent is actually aggregation)
-            return f"SELECT {aggregation}({column}) as result"
+        elif intent == 'aggregation' and aggregation:
+            # For COUNT aggregations, use COUNT(id) unless specific column requested
+            if aggregation == 'COUNT':
+                # Check if query explicitly asks for counting a specific thing
+                if column and any(word in original_query for word in [f'count {column}', f'how many {column}']):
+                    return f"SELECT {aggregation}({column}) as result"
+                else:
+                    # Default to COUNT(id)
+                    return f"SELECT COUNT(id) as result"
+            elif column:
+                # Other aggregations (AVG, SUM, MAX, MIN) use the column
+                return f"SELECT {aggregation}({column}) as result"
+            else:
+                # Aggregation without column (shouldn't happen, but handle it)
+                return "SELECT *"
+        elif intent in ['filtering', 'retrieval']:
+            # For filtering or basic retrieval, use SELECT * unless specific column requested
+            # Key distinction:
+            # - "show all students" / "get all employees" -> SELECT *
+            # - "get employee names" / "show product names" -> SELECT name/product_name
+
+            # Check if query has "all" keyword - if so, always use SELECT *
+            if 'all' in original_query.split()[:4]:  # Check first 4 words
+                return "SELECT *"
+
+            # Check if query explicitly asks for specific columns
+            column_request_words = ['get', 'show', 'display', 'list']
+            has_explicit_column = False
+
+            # Check if the query explicitly asks for a specific column name
+            if column and not keywords.get('filters'):
+                # Skip if query explicitly says "all"
+                if f'all {table}' in original_query or f'{table}' == original_query.split()[-1]:
+                    # "show all students" or "students" at the end -> SELECT *
+                    return "SELECT *"
+
+                # Remove underscores for matching (e.g., "product_name" -> "product name")
+                column_no_underscore = column.replace('_', ' ')
+
+                for word in column_request_words:
+                    # Check for column name or plural form anywhere after the action word
+                    # E.g., "get employee names", "show product name"
+                    column_words = column_no_underscore.split()
+                    for col_word in column_words:
+                        # Match singular or plural form
+                        # Pattern allows words in between: "get ... name" or "get ... names"
+                        if re.search(f'{word}.+{col_word}s?\\b', original_query):
+                            has_explicit_column = True
+                            break
+                    if has_explicit_column:
+                        break
+
+            if has_explicit_column:
+                # Explicit column request without filters (e.g., "Get employee names")
+                return f"SELECT {column}"
+            else:
+                # Default to SELECT * for filtering and retrieval
+                return "SELECT *"
         elif column:
-            # Specific column
+            # Fallback: specific column
             return f"SELECT {column}"
         else:
             # All columns
@@ -110,8 +167,11 @@ class QueryProcessor:
         """Build ORDER BY clause"""
         direction = keywords.get('ranking_direction')
         column = keywords.get('primary_column')
+        intent = keywords.get('intent')
 
-        if direction and column:
+        # Only add ORDER BY for ranking queries, not for aggregations
+        # Aggregations like MAX/MIN don't need ORDER BY
+        if direction and column and intent == 'ranking':
             return f"ORDER BY {column} {direction}"
 
         return ""
