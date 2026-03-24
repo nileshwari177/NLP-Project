@@ -51,7 +51,6 @@ class InteractiveNLPApp:
         else:
             print("⚠️  Warning: ANTHROPIC_API_KEY not found in environment")
             print("   AI-powered clarification will be disabled.")
-            print("   Set your API key in .env file to enable this feature.\n")
             self.ai_enabled = False
 
     def print_banner(self):
