@@ -1,38 +1,34 @@
-# NLP to SQL Query Generator
+# Modular NLP-to-SQL with Advanced Features
 
-An intelligent system that converts natural language queries into SQL statements using NLP techniques, confidence scoring, AI-powered disambiguation, and comprehensive evaluation metrics.
+A **modular, powerful** NLP-to-SQL system that combines clean architecture with sophisticated extraction techniques.
 
 ---
 
 ## Table of Contents
 
 - [Overview](#overview)
-- [Dataset Schema](#dataset-schema)
-- [System Architecture](#system-architecture)
-- [Keyword Extraction & Confidence Scoring](#keyword-extraction--confidence-scoring)
-- [AI-Powered Disambiguation](#ai-powered-disambiguation)
-- [SQL Query Generation](#sql-query-generation)
-- [Evaluation Metrics](#evaluation-metrics)
-- [Performance Results](#performance-results)
+- [Architecture](#architecture)
+- [Features](#features)
 - [Usage](#usage)
+- [Examples](#examples)
 - [Installation](#installation)
 
 ---
 
 ## Overview
 
-This system transforms natural language questions into executable SQL queries through a multi-stage pipeline:
-
 ```
-Natural Language → Keyword Extraction → AI Disambiguation → SQL Generation → Validation
+Query → Preprocessor → Extractor (RapidFuzz + AI) → Builder → SQL
 ```
 
 **Key Features:**
-- Multi-table database support (10 tables with 150+ columns)
-- Confidence-based keyword extraction
-- AI-powered ambiguity resolution using Claude API
-- Comprehensive evaluation with BLEU, ROUGE, and component accuracy metrics
-- 78.5% exact match accuracy, 91.12% BLEU score
+- ✓ **Modular Design** - Clean function pipeline, easy to understand and extend
+- ✓ **RapidFuzz** - Fuzzy matching for typo tolerance
+- ✓ **AI Disambiguator** - Handles ambiguous queries
+- ✓ **NLTK Preprocessing** - Lemmatization and synonym expansion
+- ✓ **Multi-Strategy Extraction** - Column-based inference, fuzzy fallback
+- ✓ **Advanced SQL** - LIKE, IN, NOT IN, BETWEEN, calculations
+- ✓ **25 Tables** - Comprehensive schema with 400+ columns
 
 ---
 
@@ -179,6 +175,85 @@ Each table includes:
 │ ORDER BY cgpa DESC  │
 │ LIMIT 10;           │
 └─────────────────────┘
+```
+
+---
+
+## Advanced Features
+
+### 1. JOIN Operations
+
+The system now supports multi-table queries with automatic relationship detection:
+
+**Example Queries:**
+```sql
+"show employees and their departments"
+→ SELECT e.id, e.name, d.department_name, d.budget
+  FROM employees e
+  LEFT JOIN departments d ON e.department = d.department_name;
+
+"orders with customer names"
+→ SELECT o.order_number, c.name as customer_name, o.total_amount
+  FROM orders o
+  INNER JOIN customers c ON o.customer_id = c.id;
+
+"top 5 projects with department names"
+→ SELECT p.project_name, p.budget, d.department_name
+  FROM projects p
+  INNER JOIN departments d ON p.department_id = d.id
+  ORDER BY p.budget DESC LIMIT 5;
+```
+
+**Supported Relationships:**
+- Employees ↔ Departments
+- Employees ↔ Managers (self-join)
+- Orders ↔ Customers
+- Orders ↔ Products
+- Projects ↔ Departments
+- Projects ↔ Employees
+- Courses ↔ Instructors
+
+See [JOIN Operations Guide](JOIN_QUERIES_GUIDE.md) for complete documentation.
+
+### 2. Calculation Queries
+
+Perform arithmetic operations directly in queries:
+
+**Example Queries:**
+```sql
+"show salary with 1.25x from employees"
+→ SELECT salary * 1.25 as result FROM employees;
+
+"average price increased by 10 percent"
+→ SELECT AVG(price) * 1.10 as result FROM products;
+
+"cgpa multiplied by 10 from students with marks > 80"
+→ SELECT cgpa * 10 as result FROM students WHERE marks > 80;
+```
+
+**Supported Operations:**
+- Multiplication: `*`, `×`, `times`, `multiplied by`
+- Division: `/`, `divided by`, `per`
+- Addition: `+`, `plus`, `added to`
+- Subtraction: `-`, `minus`, `less`
+- Percentages: `%`, `percent`, `increased by`, `decreased by`
+
+See [Calculation Queries Guide](CALCULATION_QUERIES_GUIDE.md) for complete documentation.
+
+### 3. Complex Combined Queries
+
+Combine JOINs, calculations, filters, and rankings:
+
+**Examples:**
+```sql
+"orders with customer names and total amount * 1.1"
+→ JOIN + Calculation
+
+"top 10 employees with salary * 1.5 from IT department"
+→ Calculation + Filter + Ranking
+
+"projects with budget increased by 20% and department names"
+→ JOIN + Calculation
 ```
 
 ---
@@ -866,107 +941,54 @@ BLEU:      1.000 ✓
 
 ## Usage
 
-### Interactive Application
+### Quick Start - Interactive Mode
 
-Run the interactive web application:
-
-```bash
-python interactive_app.py
-```
-
-**Features:**
-- Real-time query conversion
-- Step-by-step visualization of the pipeline
-- Confidence score display
-- AI disambiguation interface
-
-### Command Line Testing
-
-Test a single query:
+The simplest way to use the application:
 
 ```bash
-python -c "
-from interactive_nlp_extractor import NLPExtractor
-from interactive_query_processor import QueryProcessor
-
-extractor = NLPExtractor()
-processor = QueryProcessor()
-
-query = 'Show top 10 students with highest CGPA'
-keywords = extractor.extract_keywords(query)
-sql = processor.process(keywords)
-
-print(f'Query: {query}')
-print(f'SQL: {sql}')
-"
+python start.py
 ```
 
-### Running Evaluation
-
-Evaluate on the test dataset:
+OR
 
 ```bash
-# Run full evaluation with visualizations
-python run_evaluation.py --dataset test_dataset_200.json
-
-# Run evaluation without visualizations
-python run_evaluation.py --dataset test_dataset_200.json --no-viz
-
-# Generate new test dataset
-python run_evaluation.py --generate 100 --dataset new_dataset.json
-
-# Specify custom output directory
-python run_evaluation.py --dataset test_dataset_200.json --output my_results
+python run_nlp_to_sql.py
 ```
 
-**Output Files:**
+This opens an interactive shell where you can type queries continuously:
+
 ```
-evaluation_results/
-├── evaluation_results.json          # Detailed results
-├── evaluation_summary.txt           # Summary report
-├── overall_metrics.png              # Metrics comparison chart
-├── component_accuracy.png           # Component accuracy chart
-├── category_performance.png         # Category breakdown chart
-├── difficulty_performance.png       # Difficulty analysis chart
-└── comprehensive_dashboard.png      # Complete dashboard
+Query: show all students
+Query: top 10 students with highest CGPA
+Query: average salary of employees in IT department
+Query: quit  # to exit
 ```
 
-### Generating Test Datasets
+### Single Query Mode
 
-Create custom test datasets:
+Process a single query and exit:
 
-```python
-from dataset_generator import DatasetGenerator
-
-generator = DatasetGenerator()
-
-# Generate 100 test cases
-dataset = generator.generate_samples(num_samples=100)
-
-# Save to file
-generator.save_to_file(dataset, 'my_dataset.json')
+```bash
+python run_nlp_to_sql.py --query "show top 10 students with highest CGPA"
 ```
 
-**Dataset Structure:**
-```json
-{
-  "test_cases": [
-    {
-      "id": 1,
-      "category": "basic_retrieval",
-      "difficulty": "easy",
-      "natural_language": "Show all students",
-      "expected_sql": "SELECT * FROM students;",
-      "keywords": ["show", "all", "students"]
-    },
-    ...
-  ],
-  "metadata": {
-    "total_cases": 100,
-    "generated_at": "2026-03-24T12:00:00"
-  }
-}
+### Demo Mode
+
+See example queries in action:
+
+```bash
+python run_nlp_to_sql.py --demo
 ```
+
+### Help
+
+View all options:
+
+```bash
+python run_nlp_to_sql.py --help
+```
+
+For detailed usage instructions, see [USAGE.md](USAGE.md)
 
 ---
 
@@ -1013,22 +1035,21 @@ ANTHROPIC_API_KEY=your_api_key_here
 
 ```
 NLP-Project/
-├── interactive_app.py                    # Main web application
-├── interactive_nlp_extractor.py          # Keyword extraction
-├── interactive_query_processor.py        # SQL generation
-├── ai_disambiguator.py                   # AI-powered disambiguation
-├── evaluation_framework.py               # Evaluation orchestrator
-├── evaluation_metrics.py                 # Metrics calculation
-├── visualization.py                      # Chart generation
-├── dataset_generator.py                  # Test data generation
-├── run_evaluation.py                     # Evaluation script
-├── test_dataset_200.json                 # Test dataset (200 cases)
-├── requirements.txt                      # Python dependencies
-├── .env                                  # API credentials
-└── evaluation_results_200_final/         # Latest results
-    ├── evaluation_results.json
-    ├── evaluation_summary.txt
-    └── *.png (visualizations)
+├── start.py                          # Simple starter script
+├── run_nlp_to_sql.py                 # Main CLI application
+├── app.py                            # Alternative entry point
+├── nlp_extractor.py                  # Keyword extraction orchestrator
+├── nlp_preprocessor.py               # NLP preprocessing (spell check, lemmatization)
+├── extraction_strategies.py          # Extraction strategy implementations
+├── query_processor.py                # SQL generation for standard queries
+├── mysql_query_processor.py          # MySQL-specific query generation
+├── sql_generators.py                 # AI-powered SQL generators (JOINs, calculations)
+├── schema_config.py                  # Database schema (10 tables)
+├── schema_config_extended.py         # Extended schema (25 tables)
+├── requirements.txt                  # Python dependencies
+├── .env                              # API credentials
+├── README.md                         # Full documentation
+└── USAGE.md                          # Quick usage guide
 ```
 
 ---
@@ -1069,13 +1090,23 @@ col_normalized = col.replace('_', ' ')
 
 ---
 
+## Recently Implemented
+
+- [x] **JOIN operations** - Multi-table queries with automatic relationship detection
+- [x] **Calculation queries** - Arithmetic expressions (multiply, divide, percentages)
+- [x] **Complex queries** - Combining JOINs with calculations and filters
+
+See the comprehensive guides:
+- [JOIN Operations Guide](JOIN_QUERIES_GUIDE.md)
+- [Calculation Queries Guide](CALCULATION_QUERIES_GUIDE.md)
+
 ## Future Enhancements
 
-- [ ] Support for JOIN operations
 - [ ] GROUP BY and HAVING clauses
+- [ ] Multiple JOINs (3+ tables)
 - [ ] Subquery generation
-- [ ] Multiple table queries
 - [ ] Advanced WHERE conditions (OR, IN, LIKE)
+- [ ] Window functions and CTEs
 - [ ] Query optimization
 - [ ] Machine learning-based column prediction
 - [ ] User feedback integration

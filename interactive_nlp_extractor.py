@@ -321,6 +321,7 @@ class NLPExtractor:
         aggregation_info = self._extract_aggregation(query_lower)
         ranking_info = self._extract_ranking(query_lower)
         filters_info = self._extract_filters(query_lower, table_info['table'])
+        calculation_info = self._extract_calculations(query_lower, table_info['table'])
 
         # Build comprehensive result
         result = {
@@ -335,7 +336,10 @@ class NLPExtractor:
             "limit": ranking_info['limit'],
             "filters": filters_info['conditions'],
             "filter_confidence": filters_info['confidence'],
-            "intent": self._determine_intent(aggregation_info, ranking_info, filters_info),
+            "has_calculation": calculation_info['has_calculation'],
+            "calculation": calculation_info['expression'],
+            "calculation_columns": calculation_info['columns'],
+            "intent": self._determine_intent(aggregation_info, ranking_info, filters_info, calculation_info),
             "original_query": query
         }
 
@@ -735,10 +739,98 @@ class NLPExtractor:
                 })
                 confidence = 90.0
 
+        # Extract LIKE operator patterns
+        for col in self.SCHEMA[table]['columns']:
+            like_patterns = [
+                rf'{col}\s+like\s+["\']?(\w+)["\']?',
+                rf'{col}\s+containing\s+(\w+)',
+                rf'with\s+{col}\s+like\s+(\w+)',
+            ]
+            for pattern in like_patterns:
+                match = re.search(pattern, query.lower())
+                if match:
+                    conditions.append({
+                        "column": col,
+                        "operator": "LIKE",
+                        "value": f"%{match.group(1)}%",
+                        "type": "like"
+                    })
+                    confidence = 85.0
+                    break
+
+        # Extract IN operator (multiple values)
+        for col in self.SCHEMA[table]['columns']:
+            # Pattern: "in year 2023, 2024" or "year in 2023, 2024"
+            in_patterns = [
+                rf'(?:in|with)\s+{col}\s+([0-9,\s]+)',
+                rf'{col}\s+in\s+([0-9,\s]+)',
+            ]
+            for pattern in in_patterns:
+                match = re.search(pattern, query.lower())
+                if match:
+                    values_str = match.group(1)
+                    values = [v.strip() for v in values_str.split(',')]
+                    # Check if NOT IN
+                    is_not = bool(re.search(rf'not\s+(?:in|with)\s+{col}', query.lower()))
+                    conditions.append({
+                        "column": col,
+                        "operator": "NOT IN" if is_not else "IN",
+                        "value": values,
+                        "type": "string" if col in self.SCHEMA[table].get('string_columns', []) else "numeric"
+                    })
+                    confidence = 90.0
+                    break
+
         return {"conditions": conditions, "confidence": confidence}
 
-    def _determine_intent(self, agg_info: Dict, rank_info: Dict, filter_info: Dict) -> str:
+    def _extract_calculations(self, query: str, table: Optional[str]) -> Dict:
+        """Extract arithmetic calculations (e.g., salary + bonus)"""
+        if not table or table not in self.SCHEMA:
+            return {"has_calculation": False, "expression": None, "columns": []}
+
+        # Operator keywords mapping
+        operators = {
+            '+': ['plus', 'add', 'added', 'sum'],
+            '-': ['minus', 'subtract', 'less'],
+            '*': ['times', 'multiply', 'multiplied'],
+            '/': ['divide', 'divided']
+        }
+
+        # Check if query has calculation keywords
+        has_calc_keyword = False
+        found_operator = None
+        for op_symbol, keywords in operators.items():
+            if any(kw in query for kw in keywords):
+                has_calc_keyword = True
+                found_operator = op_symbol
+                break
+
+        if not has_calc_keyword:
+            return {"has_calculation": False, "expression": None, "columns": []}
+
+        # Find columns involved in calculation
+        mentioned_cols = []
+        for col in self.SCHEMA[table].get('numeric_columns', []):
+            if col in query:
+                mentioned_cols.append(col)
+
+        # Need at least 2 columns for calculation
+        if len(mentioned_cols) >= 2:
+            col1, col2 = mentioned_cols[0], mentioned_cols[1]
+            return {
+                "has_calculation": True,
+                "expression": f"{col1} {found_operator} {col2}",
+                "columns": [col1, col2]
+            }
+
+        return {"has_calculation": False, "expression": None, "columns": []}
+
+    def _determine_intent(self, agg_info: Dict, rank_info: Dict, filter_info: Dict, calc_info: Dict = None) -> str:
         """Determine the primary intent of the query"""
+        # CRITICAL: Prioritize calculation if found
+        if calc_info and calc_info.get('has_calculation'):
+            return 'calculation'
+
         # CRITICAL: If we have ranking direction AND limit, prioritize ranking over aggregation
         # Example: "Find 4 suppliers with lowest delivery time" should be ranking, not MIN aggregation
         if rank_info['direction'] and rank_info['limit']:

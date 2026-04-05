@@ -1,8 +1,14 @@
 # Core NLP and AI dependencies
 RapidFuzz==3.14.3
+nltk>=3.8.0
 anthropic==0.39.0
 python-dotenv==1.0.0
 httpx==0.27.2
+
+# Evaluation metrics
+rouge-score>=0.1.2
+bert-score>=0.3.13
+torch>=2.0.0
 
 # Visualization dependencies
 matplotlib>=3.7.0
@@ -11,7 +17,3 @@ seaborn>=0.12.0
 
 # Data processing
 pandas>=2.0.0
-
-# Optional: For advanced NLP metrics (if needed in future)
-# nltk>=3.8.0
-# scikit-learn>=1.3.0

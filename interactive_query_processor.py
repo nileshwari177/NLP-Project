@@ -59,6 +59,12 @@ class QueryProcessor:
         intent = keywords.get('intent')
         original_query = keywords.get('original_query', '').lower()
 
+        # Handle calculations first
+        if intent == 'calculation' and keywords.get('has_calculation'):
+            calculation_expr = keywords.get('calculation')
+            if calculation_expr:
+                return f"SELECT {calculation_expr} as result"
+
         # Prioritize intent over raw aggregation presence
         if intent == 'ranking' and column:
             # For ranking, show ID and the ranking column
@@ -151,6 +157,23 @@ class QueryProcessor:
                 # Range condition
                 val1, val2 = value
                 conditions.append(f"{column} BETWEEN {val1} AND {val2}")
+            elif operator in ['IN', 'NOT IN']:
+                # IN operator with multiple values
+                if isinstance(value, list):
+                    if filter_type == 'string' or filter_type == 'year':
+                        values_str = ', '.join([f"'{v}'" for v in value])
+                    else:
+                        values_str = ', '.join([str(v) for v in value])
+                    conditions.append(f"{column} {operator} ({values_str})")
+                else:
+                    # Single value
+                    if filter_type == 'string':
+                        conditions.append(f"{column} {operator} ('{value}')")
+                    else:
+                        conditions.append(f"{column} {operator} ({value})")
+            elif operator == 'LIKE' or filter_type == 'like':
+                # LIKE operator for pattern matching
+                conditions.append(f"{column} LIKE '{value}'")
             elif filter_type == 'string' or filter_type == 'year':
                 # String comparison (need quotes)
                 conditions.append(f"{column} {operator} '{value}'")
