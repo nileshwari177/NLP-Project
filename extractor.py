@@ -44,8 +44,10 @@ class ModularExtractor:
         # Preprocess
         processed_query = self.preprocess_query(query)
 
-        # Use advanced extractor (has fuzzy matching, AI, etc.)
-        result = self.advanced.extract_keywords(processed_query)
+        # Use advanced extractor with BOTH original and preprocessed queries
+        # Original query preserves case for filter values (IT, HR, etc.)
+        # Preprocessed query helps with table/column matching
+        result = self.advanced.extract_keywords(processed_query, original_query=query)
 
         # Add original query
         result['original_query'] = query

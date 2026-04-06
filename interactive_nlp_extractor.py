@@ -306,13 +306,21 @@ class NLPExtractor:
                 reverse[synonym] = canonical
         return reverse
 
-    def extract_keywords(self, query: str) -> Dict:
+    def extract_keywords(self, query: str, original_query: str = None) -> Dict:
         """
         Main extraction method - extracts all keywords and entities from query
+
+        Args:
+            query: Preprocessed query (for table/column matching)
+            original_query: Original query with preserved case (for filter values)
 
         Returns:
             Dict with table, columns, aggregation, filters, ranking, etc.
         """
+        # Use original query if provided, otherwise use the preprocessed query
+        if original_query is None:
+            original_query = query
+
         query_lower = query.lower()
 
         # Extract all components
@@ -320,7 +328,8 @@ class NLPExtractor:
         columns_info = self._extract_columns(query_lower, table_info['table'])
         aggregation_info = self._extract_aggregation(query_lower)
         ranking_info = self._extract_ranking(query_lower)
-        filters_info = self._extract_filters(query_lower, table_info['table'])
+        # Use original query for filters to preserve case (e.g., "IT" not "it")
+        filters_info = self._extract_filters(original_query, table_info['table'])
         calculation_info = self._extract_calculations(query_lower, table_info['table'])
 
         # Build comprehensive result
@@ -620,7 +629,10 @@ class NLPExtractor:
         return {"direction": direction, "limit": limit}
 
     def _extract_filters(self, query: str, table: Optional[str]) -> Dict:
-        """Extract WHERE conditions and filters"""
+        """
+        Extract WHERE conditions and filters
+        Uses case-insensitive matching but preserves original case in extracted values
+        """
         conditions = []
         confidence = 0.0
 
@@ -631,7 +643,7 @@ class NLPExtractor:
         for operator, keywords in self.COMPARISON_OPERATORS.items():
             for keyword in keywords:
                 pattern = rf'(\w+)\s+{re.escape(keyword)}\s+([0-9.]+)'
-                match = re.search(pattern, query)
+                match = re.search(pattern, query, re.IGNORECASE)
                 if match:
                     column = match.group(1)
                     value = match.group(2)
@@ -651,7 +663,7 @@ class NLPExtractor:
 
         # Extract BETWEEN filters
         between_pattern = r'(\w+)\s+between\s+([0-9.]+)\s+and\s+([0-9.]+)'
-        match = re.search(between_pattern, query)
+        match = re.search(between_pattern, query, re.IGNORECASE)
         if match:
             column = match.group(1)
             value1 = match.group(2)
@@ -671,14 +683,16 @@ class NLPExtractor:
 
         # Extract string equality filters (e.g., "department = Engineering")
         # Pattern 1: "in department Engineering" or "of department IT"
-        dept_pattern1 = r'(?:in|from|of)\s+(?:department|dept|division)\s+(\w+)'
         # Pattern 2: "in Engineering department" or "in IT department"
+        # Use case-insensitive matching but preserve captured value case
+        dept_pattern1 = r'(?:in|from|of)\s+(?:department|dept|division)\s+(\w+)'
         dept_pattern2 = r'(?:in|from|of)\s+(\w+)\s+(?:department|dept|division)'
 
-        match1 = re.search(dept_pattern1, query)
-        match2 = re.search(dept_pattern2, query)
+        match1 = re.search(dept_pattern1, query, re.IGNORECASE)
+        match2 = re.search(dept_pattern2, query, re.IGNORECASE)
 
         if (match1 or match2) and "department" in self.SCHEMA[table]['columns']:
+            # Extract value with original case preserved (e.g., "IT" not "it")
             dept_value = match1.group(1) if match1 else match2.group(1)
             conditions.append({
                 "column": "department",
@@ -690,14 +704,16 @@ class NLPExtractor:
 
         # Extract category filters
         # Pattern 1: "in category Electronics" or "of category Food"
-        cat_pattern1 = r'(?:in|from|of)\s+(?:category|type)\s+(\w+)'
         # Pattern 2: "in Electronics category" or "in Food category"
+        # Use case-insensitive matching but preserve captured value case
+        cat_pattern1 = r'(?:in|from|of)\s+(?:category|type)\s+(\w+)'
         cat_pattern2 = r'(?:in|from|of)\s+(\w+)\s+(?:category|type)'
 
-        cat_match1 = re.search(cat_pattern1, query)
-        cat_match2 = re.search(cat_pattern2, query)
+        cat_match1 = re.search(cat_pattern1, query, re.IGNORECASE)
+        cat_match2 = re.search(cat_pattern2, query, re.IGNORECASE)
 
         if (cat_match1 or cat_match2) and "category" in self.SCHEMA[table]['columns']:
+            # Extract value with original case preserved
             cat_value = cat_match1.group(1) if cat_match1 else cat_match2.group(1)
             conditions.append({
                 "column": "category",
@@ -709,13 +725,15 @@ class NLPExtractor:
 
         # Extract city filters
         # Pattern: "from city Mumbai" or "in Mumbai city"
+        # Use case-insensitive matching but preserve captured value case
         city_pattern1 = r'(?:from|in)\s+(?:city|town)\s+(\w+)'
         city_pattern2 = r'(?:from|in)\s+(\w+)\s+(?:city|town)'
 
-        city_match1 = re.search(city_pattern1, query)
-        city_match2 = re.search(city_pattern2, query)
+        city_match1 = re.search(city_pattern1, query, re.IGNORECASE)
+        city_match2 = re.search(city_pattern2, query, re.IGNORECASE)
 
         if (city_match1 or city_match2) and "city" in self.SCHEMA[table]['columns']:
+            # Extract value with original case preserved
             city_value = city_match1.group(1) if city_match1 else city_match2.group(1)
             conditions.append({
                 "column": "city",
@@ -727,7 +745,7 @@ class NLPExtractor:
 
         # Extract year filters
         year_pattern = r'(?:in|from|for)\s+(?:year|the year)\s+(\d{4})'
-        match = re.search(year_pattern, query)
+        match = re.search(year_pattern, query, re.IGNORECASE)
         if match:
             year_col = "year" if "year" in self.SCHEMA[table]['columns'] else "year_joined"
             if year_col in self.SCHEMA[table]['columns']:
@@ -740,6 +758,7 @@ class NLPExtractor:
                 confidence = 90.0
 
         # Extract LIKE operator patterns
+        # Use case-insensitive matching but preserve captured value case
         for col in self.SCHEMA[table]['columns']:
             like_patterns = [
                 rf'{col}\s+like\s+["\']?(\w+)["\']?',
@@ -747,8 +766,9 @@ class NLPExtractor:
                 rf'with\s+{col}\s+like\s+(\w+)',
             ]
             for pattern in like_patterns:
-                match = re.search(pattern, query.lower())
+                match = re.search(pattern, query, re.IGNORECASE)
                 if match:
+                    # Preserve case in the captured value
                     conditions.append({
                         "column": col,
                         "operator": "LIKE",
@@ -759,6 +779,7 @@ class NLPExtractor:
                     break
 
         # Extract IN operator (multiple values)
+        # Use case-insensitive matching but preserve captured value case
         for col in self.SCHEMA[table]['columns']:
             # Pattern: "in year 2023, 2024" or "year in 2023, 2024"
             in_patterns = [
@@ -766,12 +787,12 @@ class NLPExtractor:
                 rf'{col}\s+in\s+([0-9,\s]+)',
             ]
             for pattern in in_patterns:
-                match = re.search(pattern, query.lower())
+                match = re.search(pattern, query, re.IGNORECASE)
                 if match:
                     values_str = match.group(1)
                     values = [v.strip() for v in values_str.split(',')]
                     # Check if NOT IN
-                    is_not = bool(re.search(rf'not\s+(?:in|with)\s+{col}', query.lower()))
+                    is_not = bool(re.search(rf'not\s+(?:in|with)\s+{col}', query, re.IGNORECASE))
                     conditions.append({
                         "column": col,
                         "operator": "NOT IN" if is_not else "IN",
