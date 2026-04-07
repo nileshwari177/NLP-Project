@@ -1056,6 +1056,28 @@ class NLPExtractor:
 
         return {"has_calculation": False, "expression": None, "columns": []}
 
+    RELATIONSHIPS = {
+        ("orders", "customers"): ("customer_id", "id"),
+        ("orders", "products"): ("product_id", "id"),
+        ("employees", "departments"): ("department", "department_name"),
+        ("projects", "departments"): ("department_id", "id")
+    }
+
+    def extract_join(self, query, detected_tables):
+        if len(detected_tables) < 2:
+            return None
+
+        # Simple logic: check if any pair of detected tables has a defined relationship
+        for (t1, t2), (col1, col2) in self.RELATIONSHIPS.items():
+            if t1 in detected_tables and t2 in detected_tables:
+                return {
+                    "type": "INNER JOIN",
+                    "left_table": t1,
+                    "right_table": t2,
+                    "on": f"{t1}.{col1} = {t2}.{col2}"
+                }
+        return None
+
     def _determine_intent(self, agg_info: Dict, rank_info: Dict, filter_info: Dict, calc_info: Dict = None) -> str:
         """Determine the primary intent of the query"""
         # CRITICAL: Prioritize calculation if found

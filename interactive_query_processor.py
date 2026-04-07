@@ -208,6 +208,12 @@ class QueryProcessor:
 
         return ""
 
+    def _build_join(self, keywords):
+        join_data = keywords.get('join')
+        if not join_data:
+            return ""
+        return f"{join_data['type']} {join_data['right_table']} ON {join_data['on']}"
+
     def explain_query(self, keywords: Dict, sql: str) -> str:
         """
         Generate a human-readable explanation of what the query does

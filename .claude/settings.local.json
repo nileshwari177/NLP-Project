@@ -13,7 +13,8 @@
       "Bash(timeout 30 python:*)",
       "Bash(timeout 60 python:*)",
       "Bash(grep:*)",
-      "Bash(git checkout:*)"
+      "Bash(git checkout:*)",
+      "Bash(git restore:*)"
     ]
   }
 }
