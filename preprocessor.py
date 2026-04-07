@@ -83,7 +83,8 @@ class Preprocessor:
             'count', 'average', 'avg', 'sum', 'total', 'max', 'min',
             'top', 'bottom', 'highest', 'lowest', 'like', 'between',
             'greater', 'less', 'equal', 'and', 'or', 'not', 'in',
-            'plus', 'minus', 'times', 'divide', 'orders', 'order'
+            'plus', 'minus', 'times', 'divide', 'orders', 'order',
+            'rating', 'status', 'discount', 'bonus', 'number', 'spent', 'budget'  # Common keywords
         }
 
         words = query.split()
@@ -118,7 +119,8 @@ class Preprocessor:
             'count', 'average', 'avg', 'sum', 'total', 'max', 'min',
             'top', 'bottom', 'highest', 'lowest', 'like', 'between',
             'greater', 'less', 'equal', 'and', 'or', 'not', 'in',
-            'plus', 'minus', 'times', 'divide'
+            'plus', 'minus', 'times', 'divide', 'number', 'rating', 'status',
+            'discount', 'bonus', 'spent', 'budget'
         }
 
         # Build reverse mapping (synonym → canonical)

@@ -63,24 +63,24 @@ class QueryProcessor:
         if intent == 'calculation' and keywords.get('has_calculation'):
             calculation_expr = keywords.get('calculation')
             if calculation_expr:
-                return f"SELECT {calculation_expr} as result"
+                return f"SELECT {calculation_expr}"
 
         # Prioritize intent over raw aggregation presence
         if intent == 'ranking' and column:
-            # For ranking, show ID and the ranking column
-            return f"SELECT id, {column}"
+            # For ranking, show all columns
+            return "SELECT *"
         elif intent == 'aggregation' and aggregation:
-            # For COUNT aggregations, use COUNT(id) unless specific column requested
+            # For COUNT aggregations, use COUNT(*) unless specific column requested
             if aggregation == 'COUNT':
                 # Check if query explicitly asks for counting a specific thing
                 if column and any(word in original_query for word in [f'count {column}', f'how many {column}']):
-                    return f"SELECT {aggregation}({column}) as result"
+                    return f"SELECT {aggregation}({column})"
                 else:
-                    # Default to COUNT(id)
-                    return f"SELECT COUNT(id) as result"
+                    # Default to COUNT(*)
+                    return "SELECT COUNT(*)"
             elif column:
                 # Other aggregations (AVG, SUM, MAX, MIN) use the column
-                return f"SELECT {aggregation}({column}) as result"
+                return f"SELECT {aggregation}({column})"
             else:
                 # Aggregation without column (shouldn't happen, but handle it)
                 return "SELECT *"
@@ -174,11 +174,11 @@ class QueryProcessor:
             elif operator == 'LIKE' or filter_type == 'like':
                 # LIKE operator for pattern matching
                 conditions.append(f"{column} LIKE '{value}'")
-            elif filter_type == 'string' or filter_type == 'year':
+            elif filter_type == 'string':
                 # String comparison (need quotes)
                 conditions.append(f"{column} {operator} '{value}'")
             else:
-                # Numeric comparison
+                # Numeric comparison (including year)
                 conditions.append(f"{column} {operator} {value}")
 
         if conditions:

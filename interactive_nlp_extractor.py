@@ -13,16 +13,16 @@ class NLPExtractor:
     # Database schema definition (Expanded)
     SCHEMA = {
         "students": {
-            "columns": ["id", "name", "cgpa", "marks", "year", "age", "email", "phone", "address", "enrollment_date", "major", "semester", "gpa", "attendance_percentage", "scholarship_amount", "is_active"],
+            "columns": ["id", "name", "cgpa", "marks", "year", "age", "email", "phone", "address", "enrollment_date", "major", "semester", "gpa", "attendance_percentage", "scholarship_amount", "is_active", "department", "city", "country", "gender"],
             "numeric_columns": ["cgpa", "marks", "year", "age", "semester", "gpa", "attendance_percentage", "scholarship_amount"],
-            "string_columns": ["name", "email", "phone", "address", "major"],
+            "string_columns": ["name", "email", "phone", "address", "major", "department", "city", "country", "gender"],
             "date_columns": ["enrollment_date"],
             "boolean_columns": ["is_active"],
             "aliases": ["student", "pupils", "learners", "scholars", "undergrads", "graduates"],
             "description": "Student information including academic performance and personal details",
             "primary_key": "id",
             "sortable_columns": ["cgpa", "marks", "gpa", "year", "age", "attendance_percentage", "scholarship_amount"],
-            "filterable_columns": ["year", "major", "semester", "is_active", "cgpa", "marks"],
+            "filterable_columns": ["year", "major", "semester", "is_active", "cgpa", "marks", "department", "city", "country", "gender"],
             "default_display_columns": ["id", "name", "cgpa", "marks", "year"]
         },
         "cars": {
@@ -39,30 +39,30 @@ class NLPExtractor:
             "default_display_columns": ["id", "car_name", "brand", "price", "year"]
         },
         "employees": {
-            "columns": ["id", "name", "email", "phone", "salary", "department", "position", "year_joined", "hire_date", "rating", "age", "experience_years", "bonus", "commission", "manager_id", "office_location", "is_active", "employment_type"],
-            "numeric_columns": ["salary", "year_joined", "rating", "age", "experience_years", "bonus", "commission", "manager_id"],
-            "string_columns": ["name", "email", "phone", "department", "position", "office_location", "employment_type"],
+            "columns": ["id", "name", "email", "phone", "salary", "department", "position", "year_joined", "hire_date", "rating", "age", "experience_years", "bonus", "commission", "manager_id", "office_location", "is_active", "employment_type", "level", "city", "country", "gender", "year", "experience"],
+            "numeric_columns": ["salary", "year_joined", "rating", "age", "experience_years", "bonus", "commission", "manager_id", "level", "year", "experience"],
+            "string_columns": ["name", "email", "phone", "department", "position", "office_location", "employment_type", "city", "country", "gender"],
             "date_columns": ["hire_date"],
             "boolean_columns": ["is_active"],
             "aliases": ["employee", "staff", "workers", "personnel", "team members", "workforce"],
             "description": "Employee records with compensation and organizational details",
             "primary_key": "id",
             "foreign_keys": {"manager_id": "employees.id"},
-            "sortable_columns": ["salary", "rating", "year_joined", "experience_years", "age", "bonus"],
-            "filterable_columns": ["department", "position", "year_joined", "office_location", "is_active", "employment_type"],
+            "sortable_columns": ["salary", "rating", "year_joined", "experience_years", "age", "bonus", "level", "experience"],
+            "filterable_columns": ["department", "position", "year_joined", "office_location", "is_active", "employment_type", "level", "city", "country", "gender"],
             "default_display_columns": ["id", "name", "department", "position", "salary"]
         },
         "products": {
-            "columns": ["id", "product_name", "brand", "category", "subcategory", "price", "cost_price", "quantity", "rating", "reviews_count", "weight", "dimensions", "color", "manufacturer", "launch_date", "expiry_date", "discount_percentage", "is_available", "warehouse_location"],
-            "numeric_columns": ["price", "cost_price", "quantity", "rating", "reviews_count", "weight", "discount_percentage"],
-            "string_columns": ["product_name", "brand", "category", "subcategory", "dimensions", "color", "manufacturer", "warehouse_location"],
+            "columns": ["id", "product_name", "brand", "category", "subcategory", "price", "cost_price", "quantity", "rating", "reviews_count", "weight", "dimensions", "color", "manufacturer", "launch_date", "expiry_date", "discount_percentage", "is_available", "warehouse_location", "status", "stock", "name", "description", "in_stock"],
+            "numeric_columns": ["price", "cost_price", "quantity", "rating", "reviews_count", "weight", "discount_percentage", "stock"],
+            "string_columns": ["product_name", "brand", "category", "subcategory", "dimensions", "color", "manufacturer", "warehouse_location", "status", "name", "description"],
             "date_columns": ["launch_date", "expiry_date"],
-            "boolean_columns": ["is_available"],
+            "boolean_columns": ["is_available", "in_stock"],
             "aliases": ["product", "items", "goods", "merchandise", "inventory", "stock"],
             "description": "Product catalog with pricing, inventory, and specifications",
             "primary_key": "id",
-            "sortable_columns": ["price", "quantity", "rating", "reviews_count", "discount_percentage"],
-            "filterable_columns": ["category", "subcategory", "brand", "is_available", "color", "warehouse_location"],
+            "sortable_columns": ["price", "quantity", "rating", "reviews_count", "discount_percentage", "stock"],
+            "filterable_columns": ["category", "subcategory", "brand", "is_available", "color", "warehouse_location", "status"],
             "default_display_columns": ["id", "product_name", "category", "price", "quantity"]
         },
         "orders": {
@@ -206,6 +206,7 @@ class NLPExtractor:
         "manager_id": ["manager", "supervisor", "boss"],
         "office_location": ["location", "office", "branch"],
         "employment_type": ["type", "full time", "part time", "contract"],
+        "rating": ["performance", "rating score", "evaluation", "review score"],
 
         # Products columns
         "product_name": ["product", "item", "item name", "product title"],
@@ -224,8 +225,8 @@ class NLPExtractor:
         "order_number": ["order id", "order code", "order ref"],
         "customer_id": ["customer", "buyer", "client"],
         "product_id": ["product", "item"],
-        "total_amount": ["total", "amount", "order total", "sum"],
-        "discount_amount": ["discount", "discount value"],
+        "total_amount": ["amount", "total", "order amount", "order total", "order value", "sum"],
+        "discount_amount": ["discount", "discount value", "savings"],
         "tax_amount": ["tax", "gst", "vat"],
         "final_amount": ["final total", "final price", "amount paid", "net amount"],
         "order_date": ["date", "purchase date", "order time"],
@@ -578,10 +579,30 @@ class NLPExtractor:
 
     def _extract_aggregation(self, query: str) -> Dict:
         """Extract aggregation function if present"""
+        # Collect all potential matches across all functions
+        # E.g., "total number" should match COUNT (longer), not SUM (from "total")
+        matches = []
         for agg_func, keywords in self.AGGREGATION_KEYWORDS.items():
             for keyword in keywords:
-                if keyword in query:
-                    return {"function": agg_func, "confidence": 95.0}
+                # Use word boundary matching to avoid false matches like "in count" in "in country"
+                # Special handling for multi-word keywords like "number of"
+                if ' ' in keyword:
+                    # For multi-word keywords, just check if they're in the query
+                    if keyword in query:
+                        matches.append((agg_func, keyword, len(keyword)))
+                else:
+                    # For single-word keywords, use word boundaries
+                    # This prevents "count" from matching "country" or "in count" from matching "in country"
+                    pattern = r'\b' + re.escape(keyword) + r'\b'
+                    if re.search(pattern, query, re.IGNORECASE):
+                        matches.append((agg_func, keyword, len(keyword)))
+
+        # If we found matches, return the one with the longest keyword
+        if matches:
+            # Sort by keyword length (descending)
+            matches.sort(key=lambda x: x[2], reverse=True)
+            best_func = matches[0][0]
+            return {"function": best_func, "confidence": 95.0}
 
         return {"function": None, "confidence": 0.0}
 
@@ -612,6 +633,10 @@ class NLPExtractor:
         limit_patterns = [
             r'top\s+(\d+)',
             r'bottom\s+(\d+)',
+            r'highest\s+(\d+)',
+            r'lowest\s+(\d+)',
+            r'best\s+(\d+)',
+            r'worst\s+(\d+)',
             r'first\s+(\d+)',
             r'last\s+(\d+)',
             r'show\s+(\d+)',
@@ -685,8 +710,9 @@ class NLPExtractor:
         # Pattern 1: "in department Engineering" or "of department IT"
         # Pattern 2: "in Engineering department" or "in IT department"
         # Use case-insensitive matching but preserve captured value case
-        dept_pattern1 = r'(?:in|from|of)\s+(?:department|dept|division)\s+(\w+)'
-        dept_pattern2 = r'(?:in|from|of)\s+(\w+)\s+(?:department|dept|division)'
+        # IMPORTANT: Don't match if followed by comma (that's an IN operator)
+        dept_pattern1 = r'(?:in|from|of)\s+(?:department|dept|division)\s+(\w+)(?![\s,]*,)'
+        dept_pattern2 = r'(?:in|from|of)\s+(\w+)\s+(?:department|dept|division)(?![\s,]*,)'
 
         match1 = re.search(dept_pattern1, query, re.IGNORECASE)
         match2 = re.search(dept_pattern2, query, re.IGNORECASE)
@@ -694,13 +720,15 @@ class NLPExtractor:
         if (match1 or match2) and "department" in self.SCHEMA[table]['columns']:
             # Extract value with original case preserved (e.g., "IT" not "it")
             dept_value = match1.group(1) if match1 else match2.group(1)
-            conditions.append({
-                "column": "department",
-                "operator": "=",
-                "value": dept_value,
-                "type": "string"
-            })
-            confidence = 85.0
+            # Check if there's a comma nearby (IN operator case)
+            if ',' not in query[max(0, match1.start() if match1 else match2.start() - 20):min(len(query), (match1.end() if match1 else match2.end()) + 20)]:
+                conditions.append({
+                    "column": "department",
+                    "operator": "=",
+                    "value": dept_value,
+                    "type": "string"
+                })
+                confidence = 85.0
 
         # Extract category filters
         # Pattern 1: "in category Electronics" or "of category Food"
@@ -723,37 +751,180 @@ class NLPExtractor:
             })
             confidence = 85.0
 
-        # Extract city filters
+        # Extract city filters (but not if comma-separated - that's IN operator)
         # Pattern: "from city Mumbai" or "in Mumbai city"
         # Use case-insensitive matching but preserve captured value case
-        city_pattern1 = r'(?:from|in)\s+(?:city|town)\s+(\w+)'
-        city_pattern2 = r'(?:from|in)\s+(\w+)\s+(?:city|town)'
+        city_pattern1 = r'(?:from|in)\s+(?:city|town)\s+(\w+)(?!\s*,)'
+        city_pattern2 = r'(?:from|in)\s+(\w+)\s+(?:city|town)(?!\s*,)'
 
         city_match1 = re.search(city_pattern1, query, re.IGNORECASE)
         city_match2 = re.search(city_pattern2, query, re.IGNORECASE)
 
         if (city_match1 or city_match2) and "city" in self.SCHEMA[table]['columns']:
-            # Extract value with original case preserved
-            city_value = city_match1.group(1) if city_match1 else city_match2.group(1)
-            conditions.append({
-                "column": "city",
-                "operator": "=",
-                "value": city_value,
-                "type": "string"
-            })
-            confidence = 85.0
+            # Check if there's a comma nearby (IN operator case)
+            match_obj = city_match1 if city_match1 else city_match2
+            if ',' not in query[match_obj.start():min(len(query), match_obj.end() + 20)]:
+                # Extract value with original case preserved
+                city_value = city_match1.group(1) if city_match1 else city_match2.group(1)
+                conditions.append({
+                    "column": "city",
+                    "operator": "=",
+                    "value": city_value,
+                    "type": "string"
+                })
+                confidence = 85.0
 
-        # Extract year filters
-        year_pattern = r'(?:in|from|for)\s+(?:year|the year)\s+(\d{4})'
+        # Extract country filters (but not if comma-separated - that's IN operator)
+        # Pattern: "from country USA" or "from India"
+        country_pattern1 = r'(?:from|in)\s+(?:country)\s+(\w+)(?!\s*,)'
+        country_pattern2 = r'(?:from)\s+(\w+)(?!\s*,)'  # More permissive for single value
+
+        country_match1 = re.search(country_pattern1, query, re.IGNORECASE)
+        # Only use pattern2 if no other patterns matched and "from" is present
+        country_match2 = re.search(country_pattern2, query, re.IGNORECASE) if not conditions and 'from' in query else None
+
+        if (country_match1 or country_match2) and "country" in self.SCHEMA[table]['columns']:
+            # Check if there's a comma nearby (IN operator case)
+            match_obj = country_match1 if country_match1 else country_match2
+            if match_obj and ',' not in query[match_obj.start():min(len(query), match_obj.end() + 20)]:
+                country_value = country_match1.group(1) if country_match1 else country_match2.group(1)
+                conditions.append({
+                    "column": "country",
+                    "operator": "=",
+                    "value": country_value,
+                    "type": "string"
+                })
+                confidence = 85.0
+
+        # Extract status filters (but not if comma-separated - that's IN operator)
+        # Pattern: "with status completed" or "status is pending"
+        status_pattern1 = r'(?:with|has)\s+status\s+(\w+)(?!\s*,)'
+        status_pattern2 = r'status\s+(?:is|=)\s+(\w+)(?!\s*,)'
+
+        status_match1 = re.search(status_pattern1, query, re.IGNORECASE)
+        status_match2 = re.search(status_pattern2, query, re.IGNORECASE)
+
+        if (status_match1 or status_match2) and "status" in self.SCHEMA[table]['columns']:
+            # Check if there's a comma nearby (IN operator case)
+            match_obj = status_match1 if status_match1 else status_match2
+            if ',' not in query[match_obj.start():min(len(query), match_obj.end() + 20)]:
+                status_value = status_match1.group(1) if status_match1 else status_match2.group(1)
+                conditions.append({
+                    "column": "status",
+                    "operator": "=",
+                    "value": status_value,
+                    "type": "string"
+                })
+                confidence = 85.0
+
+        # Extract year filters (but not if comma-separated - that's IN operator)
+        year_pattern = r'(?:in|from|for)\s+(?:year|the year)\s+(\d{4})(?!\s*,)'
         match = re.search(year_pattern, query, re.IGNORECASE)
-        if match:
+        if match and ',' not in query[match.start():min(len(query), match.end() + 10)]:
             year_col = "year" if "year" in self.SCHEMA[table]['columns'] else "year_joined"
             if year_col in self.SCHEMA[table]['columns']:
                 conditions.append({
                     "column": year_col,
                     "operator": "=",
                     "value": match.group(1),
-                    "type": "year"
+                    "type": "numeric"
+                })
+                confidence = 90.0
+
+        # Extract semester filters (but not if comma-separated - that's IN operator)
+        # Pattern: "in semester 5" or "semester 3"
+        semester_pattern = r'(?:in\s+)?semester\s+(\d+)(?!\s*,)'
+        match = re.search(semester_pattern, query, re.IGNORECASE)
+        if match and "semester" in self.SCHEMA[table]['columns']:
+            # Check if there's a comma nearby
+            if ',' not in query[match.start():min(len(query), match.end() + 10)]:
+                conditions.append({
+                    "column": "semester",
+                    "operator": "=",
+                    "value": match.group(1),
+                    "type": "numeric"
+                })
+                confidence = 90.0
+
+        # Extract level filters (but not if comma-separated - that's IN operator)
+        # Pattern: "in level 3" or "level 2"
+        level_pattern = r'(?:in\s+)?level\s+(\d+)(?!\s*,)'
+        match = re.search(level_pattern, query, re.IGNORECASE)
+        if match and "level" in self.SCHEMA[table]['columns']:
+            # Check if there's a comma nearby
+            if ',' not in query[match.start():min(len(query), match.end() + 10)]:
+                conditions.append({
+                    "column": "level",
+                    "operator": "=",
+                    "value": match.group(1),
+                    "type": "numeric"
+                })
+                confidence = 90.0
+
+        # Extract brand filters
+        # Pattern: "from brand Apple" or "brand is Samsung"
+        brand_pattern1 = r'(?:from|of)\s+brand\s+(\w+)'
+        brand_pattern2 = r'brand\s+(?:is|=)\s+(\w+)'
+
+        brand_match1 = re.search(brand_pattern1, query, re.IGNORECASE)
+        brand_match2 = re.search(brand_pattern2, query, re.IGNORECASE)
+
+        if (brand_match1 or brand_match2) and "brand" in self.SCHEMA[table]['columns']:
+            brand_value = brand_match1.group(1) if brand_match1 else brand_match2.group(1)
+            conditions.append({
+                "column": "brand",
+                "operator": "=",
+                "value": brand_value,
+                "type": "string"
+            })
+            confidence = 85.0
+
+        # Extract gender filters
+        # Pattern: "with gender male" or "gender is female"
+        gender_pattern1 = r'(?:with|has)\s+gender\s+(\w+)(?!\s*,)'
+        gender_pattern2 = r'gender\s+(?:is|=)\s+(\w+)(?!\s*,)'
+
+        gender_match1 = re.search(gender_pattern1, query, re.IGNORECASE)
+        gender_match2 = re.search(gender_pattern2, query, re.IGNORECASE)
+
+        if (gender_match1 or gender_match2) and "gender" in self.SCHEMA[table]['columns']:
+            # Check if there's a comma nearby (IN operator case)
+            match_obj = gender_match1 if gender_match1 else gender_match2
+            if match_obj and ',' not in query[match_obj.start():min(len(query), match_obj.end() + 20)]:
+                gender_value = gender_match1.group(1) if gender_match1 else gender_match2.group(1)
+                conditions.append({
+                    "column": "gender",
+                    "operator": "=",
+                    "value": gender_value,
+                    "type": "string"
+                })
+                confidence = 85.0
+
+        # Extract boolean filters for "in stock", "in_stock", "is active", etc.
+        # Pattern: "products in stock" → in_stock = true
+        if "in_stock" in self.SCHEMA[table].get('boolean_columns', []):
+            if re.search(r'\bin\s+stock\b', query, re.IGNORECASE):
+                conditions.append({
+                    "column": "in_stock",
+                    "operator": "=",
+                    "value": "true",
+                    "type": "boolean"
+                })
+                confidence = 90.0
+
+        # Extract customer_id filter: "for customer X" or "customer X"
+        if "customer_id" in self.SCHEMA[table]['columns']:
+            customer_pattern1 = r'(?:for|from)\s+customer\s+(\d+)'
+            customer_pattern2 = r'customer\s+(\d+)'
+            match = re.search(customer_pattern1, query, re.IGNORECASE)
+            if not match:
+                match = re.search(customer_pattern2, query, re.IGNORECASE)
+            if match:
+                conditions.append({
+                    "column": "customer_id",
+                    "operator": "=",
+                    "value": match.group(1),
+                    "type": "numeric"
                 })
                 confidence = 90.0
 
@@ -778,29 +949,33 @@ class NLPExtractor:
                     confidence = 85.0
                     break
 
-        # Extract IN operator (multiple values)
+        # Extract IN operator (multiple values only)
         # Use case-insensitive matching but preserve captured value case
+        # IMPORTANT: Check this BEFORE single-value patterns
         for col in self.SCHEMA[table]['columns']:
-            # Pattern: "in year 2023, 2024" or "year in 2023, 2024"
+            # Pattern: "year in 2023, 2024" or "in year 2023, 2024" or "in department IT, HR"
+            # Match both numbers and words (for string columns)
             in_patterns = [
-                rf'(?:in|with)\s+{col}\s+([0-9,\s]+)',
-                rf'{col}\s+in\s+([0-9,\s]+)',
+                rf'{col}\s+in\s+([\w,\s]+)',  # "year in 2023, 2024" or "status in pending, shipped"
+                rf'(?:in|with)\s+{col}\s+([\w,\s]+)',  # "in year 2023, 2024" or "with status pending, shipped"
             ]
             for pattern in in_patterns:
                 match = re.search(pattern, query, re.IGNORECASE)
                 if match:
                     values_str = match.group(1)
-                    values = [v.strip() for v in values_str.split(',')]
-                    # Check if NOT IN
-                    is_not = bool(re.search(rf'not\s+(?:in|with)\s+{col}', query, re.IGNORECASE))
-                    conditions.append({
-                        "column": col,
-                        "operator": "NOT IN" if is_not else "IN",
-                        "value": values,
-                        "type": "string" if col in self.SCHEMA[table].get('string_columns', []) else "numeric"
-                    })
-                    confidence = 90.0
-                    break
+                    # Only proceed if there's actually a comma (multiple values)
+                    if ',' in values_str:
+                        values = [v.strip() for v in values_str.split(',')]
+                        # Check if NOT IN
+                        is_not = bool(re.search(rf'not\s+(?:in|with)\s+{col}', query, re.IGNORECASE))
+                        conditions.append({
+                            "column": col,
+                            "operator": "NOT IN" if is_not else "IN",
+                            "value": values,
+                            "type": "string" if col in self.SCHEMA[table].get('string_columns', []) else "numeric"
+                        })
+                        confidence = 90.0
+                        break
 
         return {"conditions": conditions, "confidence": confidence}
 
@@ -830,10 +1005,45 @@ class NLPExtractor:
             return {"has_calculation": False, "expression": None, "columns": []}
 
         # Find columns involved in calculation
+        # Check for full column names, partial matches, and synonyms
         mentioned_cols = []
+        query_words = query.split()
+
         for col in self.SCHEMA[table].get('numeric_columns', []):
-            if col in query:
+            # Strategy 1: Exact match (with or without underscores)
+            if col in query or col.replace('_', ' ') in query:
                 mentioned_cols.append(col)
+                continue
+
+            # Strategy 2: Partial match (e.g., "discount" matches "discount_amount")
+            # Match if first part of column name is in query
+            col_parts = col.split('_')
+            if col_parts[0] in query_words and len(col_parts[0]) > 3:
+                # Make sure we don't match "price" to both "price" and "cost_price"
+                # Only match if the first part is the main identifier
+                mentioned_cols.append(col)
+                continue
+
+            # Strategy 3: Check synonyms
+            for syn in self.COLUMN_SYNONYMS.get(col, []):
+                if syn in query:
+                    mentioned_cols.append(col)
+                    break
+
+        # Remove duplicates while preserving order
+        mentioned_cols = list(dict.fromkeys(mentioned_cols))
+
+        # If we matched more than 2 columns, try to pick the most relevant
+        # by preferring columns whose first part exactly matches a query word
+        if len(mentioned_cols) > 2:
+            # Prioritize columns whose first part is an exact word match
+            priority_cols = []
+            for col in mentioned_cols:
+                col_first_part = col.split('_')[0]
+                if col_first_part in query_words:
+                    priority_cols.append(col)
+            if len(priority_cols) >= 2:
+                mentioned_cols = priority_cols[:2]
 
         # Need at least 2 columns for calculation
         if len(mentioned_cols) >= 2:
